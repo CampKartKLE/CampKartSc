@@ -92,6 +92,20 @@ const listingSchema = new mongoose.Schema(
     },
 
     likedBy: [String], // Array of user IDs who liked this item
+
+    // -------------------------
+    // Verification Status
+    // -------------------------
+    status: {
+      type: String,
+      enum: ['pending', 'active', 'rejected'],
+      default: 'pending',
+    },
+
+    adminComments: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

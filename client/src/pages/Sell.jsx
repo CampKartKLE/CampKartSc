@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Upload, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { createListing } from '../api/listings'; // Use real API
+import { useRole } from '../context/RoleContext';
+import { createListing, updateListing } from '../api/listings';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -13,7 +14,14 @@ import { categories } from '../data/products';
 
 const Sell = () => {
     const { user, isAuthenticated } = useAuth();
+    const { isApprovedSeller } = useRole();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isAuthenticated && !isApprovedSeller) {
+            navigate('/profile/apply-seller');
+        }
+    }, [isAuthenticated, isApprovedSeller, navigate]);
     // Restore searchParams to get editId
     const [searchParams] = useSearchParams();
     const editId = searchParams.get('edit');

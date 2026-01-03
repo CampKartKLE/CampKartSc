@@ -36,6 +36,8 @@ exports.getAllListings = async (req, res) => {
           { isSold: true, soldAt: { $gte: sevenDaysAgo } }, // Sold within 7 days
         ],
       },
+      // ONLY ACTIVE LISTINGS
+      { status: 'active' }
     ];
 
     // Sorting
@@ -247,5 +249,56 @@ exports.toggleLike = async (req, res) => {
   } catch (err) {
     console.error("ToggleLike error:", err);
     res.status(500).json({ message: "Failed to toggle like" });
+  }
+};
+
+// -----------------------------
+// SELLER: GET MY LISTINGS
+// -----------------------------
+exports.getMyListings = async (req, res) => {
+  try {
+    // Return ALL listings for this seller (active, pending, rejected)
+    const listings = await Listing.find({ 'seller.id': req.user.id }).sort({ createdAt: -1 });
+    res.json(listings);
+  } catch (err) {
+    console.error("GetMyListings error:", err);
+    res.status(500).json({ message: "Failed to fetch seller listings" });
+  }
+};
+
+// -----------------------------
+// ADMIN: LISTING VERIFICATION
+// -----------------------------
+exports.getPendingListings = async (req, res) => {
+  try {
+    const listings = await Listing.find({ status: 'pending' }).sort({ createdAt: -1 });
+    res.json(listings);
+  } catch (err) {
+    console.error("GetPendingListings error:", err);
+    res.status(500).json({ message: "Failed to fetch pending listings" });
+  }
+};
+
+exports.updateListingStatus = async (req, res) => {
+  try {
+    const { status, comments } = req.body; // status: 'active' | 'rejected'
+    const listingId = req.params.id;
+
+    if (!['active', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const listing = await Listing.findById(listingId);
+    if (!listing) return res.status(404).json({ message: "Listing not found" });
+
+    listing.status = status;
+    if (comments) listing.adminComments = comments;
+
+    await listing.save();
+
+    res.json({ success: true, listing });
+  } catch (err) {
+    console.error("UpdateListingStatus error:", err);
+    res.status(500).json({ message: "Failed to update listing status" });
   }
 };

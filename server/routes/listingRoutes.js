@@ -27,21 +27,36 @@ const upload = multer({ storage });
 // ------------------------
 const optionalAuth = require("../middleware/optionalAuth");
 
+const { isSeller } = require("../middleware/roleMiddleware");
+
 // ------------------------
 // Listing Routes
 // ------------------------
 router.get("/", listingController.getAllListings);
 router.get("/:id", optionalAuth, listingController.getListingById);
 
-router.post("/", authMiddleware, upload.array("images", 5), listingController.createListing);
+router.post("/", authMiddleware, isSeller, upload.array("images", 5), listingController.createListing);
 
-router.put("/:id", authMiddleware, upload.array("images", 5), listingController.updateListing);
-router.delete("/:id", authMiddleware, listingController.deleteListing);
+router.put("/:id", authMiddleware, isSeller, upload.array("images", 5), listingController.updateListing);
+router.delete("/:id", authMiddleware, isSeller, listingController.deleteListing);
+
+router.put("/:id", authMiddleware, isSeller, upload.array("images", 5), listingController.updateListing);
+router.delete("/:id", authMiddleware, isSeller, listingController.deleteListing);
+
+// Seller Dashboard Listings (all statuses)
+router.get("/seller/my-listings", authMiddleware, isSeller, listingController.getMyListings);
 
 // Mark as sold
-router.patch("/:id/sold", authMiddleware, listingController.markAsSold);
+router.patch("/:id/sold", authMiddleware, isSeller, listingController.markAsSold);
 
 // Toggle like
 router.post("/:id/like", authMiddleware, listingController.toggleLike);
+
+// ------------------------
+// Admin Listing Routes
+// ------------------------
+const { isAdmin } = require("../middleware/roleMiddleware");
+router.get("/admin/pending", authMiddleware, isAdmin, listingController.getPendingListings);
+router.patch("/admin/:id/status", authMiddleware, isAdmin, listingController.updateListingStatus);
 
 module.exports = router;

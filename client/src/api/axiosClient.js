@@ -7,7 +7,7 @@ const API = import.meta.env.VITE_API_URL;
 console.log("🔗 API Base URL Loaded:", API);
 
 const axiosClient = axios.create({
-  baseURL: API, // http://localhost:5000/api
+  baseURL: API || 'http://localhost:5000/api', // Fallback to localhost if env missing
   headers: {
     "Content-Type": "application/json",
   },

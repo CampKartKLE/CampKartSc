@@ -21,3 +21,8 @@ export const getMeApi = async (token) => {
   });
   return res.data;
 };
+
+export const applySellerApi = async (reason) => {
+  const res = await axiosClient.post("/users/apply-seller", { reason });
+  return res.data;
+};

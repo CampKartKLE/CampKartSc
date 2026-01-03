@@ -128,16 +128,27 @@ exports.verifyOTP = async (req, res) => {
    ============================================================ */
 exports.login = async (req, res) => {
   try {
+    console.log("Login attempt:", { email: req.body.email, hasPassword: !!req.body.password });
+
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      console.log("Login failed: Missing email or password");
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
+    console.log("Normalized email:", normalizedEmail);
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
+      console.log("Login failed: User not found for email:", normalizedEmail);
       return res.status(400).json({ message: "User not found" });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
+      console.log("Login failed: Invalid password for email:", normalizedEmail);
       return res.status(400).json({ message: "Invalid password" });
     }
 
@@ -147,6 +158,7 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    console.log("Login successful for:", normalizedEmail);
     res.json({
       message: "Login successful",
       token,

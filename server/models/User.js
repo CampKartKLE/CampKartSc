@@ -2,6 +2,27 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    onboardingCompleted: {
+      type: Boolean,
+      default: false
+    },
+    role: {
+      type: String,
+      enum: ['customer', 'seller', 'admin'],
+      default: 'customer'
+    },
+    sellerApprovalStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none'
+    },
+    isApprovedSeller: {
+      type: Boolean,
+      default: false
+    },
+    sellerApplicationReason: {
+      type: String
+    },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String },

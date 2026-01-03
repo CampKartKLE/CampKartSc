@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useRole } from './context/RoleContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
@@ -17,6 +18,8 @@ import Safety from './pages/Safety';
 import Terms from './pages/Terms';
 import Help from './pages/Help';
 import Support from './pages/Support';
+import SellerApplication from './pages/SellerApplication';
+import AdminApprovalPanel from './pages/AdminApprovalPanel';
 import NotFound from './pages/NotFound';
 
 const ProtectedRoute = ({ children }) => {
@@ -78,6 +81,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/apply-seller"
+            element={
+              <ProtectedRoute>
+                <SellerApplication />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminApprovalPanel />
               </ProtectedRoute>
             }
           />

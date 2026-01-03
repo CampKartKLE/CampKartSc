@@ -1,33 +1,29 @@
+// client/src/components/layout/Header.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingBag, Bell, MessageCircle, User, LogOut, Heart, Settings, ChevronDown, PlusCircle } from 'lucide-react';
+import { Menu, X, ShoppingBag, Bell, MessageCircle, User, LogOut, Heart, Settings, ChevronDown, PlusCircle, LayoutDashboard, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useRole } from '../../context/RoleContext';
 import Button from '../ui/Button';
 import Avatar from '../ui/Avatar';
 import SearchBar from '../ui/SearchBar';
-import LoginOnboardingModal from '../auth/LoginOnboardingModal';
 import { cn } from '../../lib/utils';
 
 const Header = () => {
     const { user, logout, isAuthenticated } = useAuth();
+    const { currentRole, ROLES, uiMode, switchUiMode, isApprovedSeller } = useRole();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-    const [authIntent, setAuthIntent] = useState('login'); // 'login' | 'signup'
     const navigate = useNavigate();
 
-    // Close profile dropdown when clicking outside (simple implementation)
-    // For a robust solution, a click-outside hook is better, but this suffices for now
     const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
 
     const handleLoginClick = () => {
-        setAuthIntent('login');
-        setIsOnboardingOpen(true);
+        navigate('/login');
     };
 
     const handleSignupClick = () => {
-        setAuthIntent('signup');
-        setIsOnboardingOpen(true);
+        navigate('/signup');
     };
 
     return (
@@ -54,6 +50,41 @@ const Header = () => {
                     <div className="hidden md:flex items-center gap-3">
                         {isAuthenticated ? (
                             <>
+                                {/* Role Switch Button (Simplified) */}
+                                {isApprovedSeller && (
+                                    <button
+                                        onClick={switchUiMode}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold uppercase tracking-wider",
+                                            uiMode === 'buyer'
+                                                ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
+                                                : "bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100"
+                                        )}
+                                    >
+                                        {uiMode === 'buyer' ? (
+                                            <>
+                                                <LayoutDashboard size={14} />
+                                                Switch to Seller
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ShoppingBag size={14} />
+                                                Switch to Buyer
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                {currentRole === ROLES.ADMIN && (
+                                    <Link to="/admin">
+                                        <Button variant="ghost" className="text-purple-600 gap-2 font-bold text-xs uppercase">
+                                            <UserCheck size={16} /> Admin
+                                        </Button>
+                                    </Link>
+                                )}
+
+                                <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
                                 {/* Action Icons */}
                                 <div className="flex items-center gap-1 mr-2">
                                     <Link to="/profile?tab=saved">
@@ -64,20 +95,23 @@ const Header = () => {
                                     <Link to="/chat">
                                         <Button variant="ghost" size="icon" className="text-gray-500 hover:text-campus-blue hover:bg-blue-50 rounded-full relative" title="Messages">
                                             <MessageCircle size={22} />
-                                            {/* Badge placeholder */}
                                             <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-danger-red border-2 border-white rounded-full"></span>
                                         </Button>
                                     </Link>
-                                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-campus-blue hover:bg-blue-50 rounded-full" title="Notifications">
-                                        <Bell size={22} />
-                                    </Button>
                                 </div>
 
                                 <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
-                                {/* Sell Button */}
+                                {/* Sell Button (Visible contexts) */}
                                 <Link to="/sell">
-                                    <Button className="rounded-full gap-2 shadow-md shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow">
+                                    <Button
+                                        className={cn(
+                                            "rounded-full gap-2 shadow-md transition-shadow",
+                                            uiMode === 'seller'
+                                                ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 hover:shadow-emerald-500/40"
+                                                : "shadow-blue-500/20 hover:shadow-blue-500/40"
+                                        )}
+                                    >
                                         <PlusCircle size={18} />
                                         SELL
                                     </Button>
@@ -109,11 +143,6 @@ const Header = () => {
                                                 <Link to="/profile" onClick={() => setIsProfileOpen(false)}>
                                                     <div className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-colors">
                                                         <User size={16} /> My Account
-                                                    </div>
-                                                </Link>
-                                                <Link to="/profile?tab=saved" onClick={() => setIsProfileOpen(false)}>
-                                                    <div className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-colors">
-                                                        <Heart size={16} /> Saved Items
                                                     </div>
                                                 </Link>
                                                 <Link to="/settings" onClick={() => setIsProfileOpen(false)}>
@@ -166,27 +195,27 @@ const Header = () => {
 
                             {isAuthenticated ? (
                                 <>
+                                    {isApprovedSeller && (
+                                        <Button
+                                            onClick={() => { switchUiMode(); setIsMenuOpen(false); }}
+                                            variant="outline"
+                                            className="w-full justify-start gap-2"
+                                        >
+                                            <LayoutDashboard size={18} />
+                                            Switch to {uiMode === 'buyer' ? 'Seller' : 'Buyer'} Mode
+                                        </Button>
+                                    )}
                                     <Link to="/sell" onClick={() => setIsMenuOpen(false)}>
                                         <Button className="w-full justify-start gap-2 bg-campus-blue text-white">
                                             <PlusCircle size={18} /> Sell an Item
                                         </Button>
                                     </Link>
                                     <div className="border-t my-2 pt-2">
-                                        <div className="flex items-center gap-3 px-2 mb-4">
-                                            <Avatar src={user?.avatarUrl} fallback={user?.name?.charAt(0)} />
-                                            <div>
-                                                <p className="font-semibold">{user?.name}</p>
-                                                <p className="text-xs text-gray-500">{user?.email}</p>
-                                            </div>
-                                        </div>
                                         <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
                                             <Button variant="ghost" className="w-full justify-start">My Profile</Button>
                                         </Link>
                                         <Link to="/chat" onClick={() => setIsMenuOpen(false)}>
                                             <Button variant="ghost" className="w-full justify-start">Messages</Button>
-                                        </Link>
-                                        <Link to="/profile?tab=saved" onClick={() => setIsMenuOpen(false)}>
-                                            <Button variant="ghost" className="w-full justify-start">Saved Items</Button>
                                         </Link>
                                         <Button variant="ghost" className="w-full justify-start text-danger-red mt-2" onClick={() => { logout(); setIsMenuOpen(false); navigate('/'); }}>
                                             <LogOut size={18} className="mr-2" /> Logout
@@ -214,16 +243,8 @@ const Header = () => {
                     </div>
                 )}
             </header>
-
-            {/* Login Onboarding Modal */}
-            <LoginOnboardingModal
-                isOpen={isOnboardingOpen}
-                onClose={() => setIsOnboardingOpen(false)}
-                intent={authIntent}
-            />
         </>
     );
 };
 
 export default Header;
-

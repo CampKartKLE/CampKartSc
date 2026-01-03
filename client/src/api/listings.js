@@ -70,3 +70,8 @@ export const toggleListingLike = async (id) => {
     const { data } = await axiosClient.post(`/listings/${id}/like`);
     return data;
 };
+
+export const getMyListings = async () => {
+    const { data } = await axiosClient.get('/listings/seller/my-listings');
+    return data;
+};

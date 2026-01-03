@@ -39,8 +39,9 @@ const ItemDetail = () => {
             setSimilarProducts([]);
         } catch (error) {
             console.error("Failed to fetch product", error);
-            addToast({ title: 'Error', description: 'Product not found', variant: 'destructive' });
-            navigate('/marketplace');
+            // Don'tredirect, just let the component render null or a specific error state
+            setProduct(null);
+            // addToast({ title: 'Error', description: 'Product not found', variant: 'destructive' }); // Optional: keep toast or rely on UI
         } finally {
             setLoading(false);
         }
@@ -95,6 +96,21 @@ const ItemDetail = () => {
         navigator.clipboard.writeText(window.location.href);
         addToast({ title: 'Link Copied', description: 'Product link copied to clipboard' });
     };
+
+    if (!loading && !product) {
+        return (
+            <div className="container mx-auto px-4 py-20 text-center">
+                <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <Flag size={32} className="text-gray-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Product Not Found</h2>
+                <p className="text-gray-500 mt-2 mb-6">The item you are looking for might have been removed or is unavailable.</p>
+                <Link to="/marketplace">
+                    <Button>Browse Marketplace</Button>
+                </Link>
+            </div>
+        );
+    }
 
     if (loading) {
         return <div className="container mx-auto px-4 py-8">Loading...</div>;

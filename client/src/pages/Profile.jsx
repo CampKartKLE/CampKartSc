@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Package, Heart, Settings, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Package, Heart, Settings, Edit, Trash2, CheckCircle, Tag, Clock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getListings, deleteListing, getWishlist, toggleWishlist, markListingAsSold } from '../api/listings';
 import Avatar from '../components/ui/Avatar';
@@ -26,16 +26,12 @@ const Profile = () => {
     const fetchData = async () => {
         try {
             const allProducts = await getListings();
-            // Filter by ID to match backend "protect" middleware logic
             const userProducts = allProducts.filter(p =>
                 (p.seller?.id === user?._id) ||
                 (p.seller?._id === user?._id)
             );
             setMyListings(userProducts);
 
-
-
-            // Fetch real saved items
             if (activeTab === 'saved') {
                 const wishlistData = await getWishlist();
                 setSavedItems(wishlistData);
@@ -116,6 +112,48 @@ const Profile = () => {
                                     </Button>
                                 </Link>
                             </div>
+
+                            {/* Seller Status Card */}
+                            {!user?.isApprovedSeller && (
+                                <div className="mt-8 p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                                    <h4 className="font-bold text-amber-900 text-sm mb-1 flex items-center gap-2">
+                                        <Tag size={14} />
+                                        Become a Seller
+                                    </h4>
+                                    <p className="text-xs text-amber-700 mb-4 leading-relaxed">
+                                        You need admin approval to list items and reach buyers.
+                                    </p>
+                                    {user?.sellerApprovalStatus === 'pending' ? (
+                                        <div className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-white rounded-xl border border-amber-200 text-amber-600 font-bold text-xs uppercase tracking-wider shadow-sm">
+                                            <Clock size={14} className="animate-pulse" />
+                                            Pending Review
+                                        </div>
+                                    ) : (
+                                        <Link to="/profile/apply-seller">
+                                            <Button size="sm" className="w-full bg-amber-600 hover:bg-amber-700 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                                Apply Now
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
+
+                            {user?.isApprovedSeller && (
+                                <div className="mt-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                                    <h4 className="font-bold text-emerald-900 text-sm mb-1 flex items-center gap-2">
+                                        <ShieldCheck size={14} />
+                                        Verified Seller
+                                    </h4>
+                                    <p className="text-xs text-emerald-700 mb-4">
+                                        You can list items and access the seller dashboard.
+                                    </p>
+                                    <Link to="/dashboard">
+                                        <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                            Go to Seller Tools
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -126,8 +164,8 @@ const Profile = () => {
                         <div>
                             <div className="flex justify-between items-center mb-6">
                                 <h1 className="text-2xl font-bold">My Listings</h1>
-                                <Link to="/sell">
-                                    <Button>Post New Item</Button>
+                                <Link to="/sell" className={!user?.isApprovedSeller ? 'pointer-events-none opacity-50' : ''}>
+                                    <Button disabled={!user?.isApprovedSeller}>Post New Item</Button>
                                 </Link>
                             </div>
 
@@ -136,10 +174,10 @@ const Profile = () => {
                             ) : myListings.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {myListings.map((item) => (
-                                        <div key={item.id} className="relative group">
+                                        <div key={item.id || item._id} className="relative group">
                                             <ProductCard product={item} />
                                             <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                                <Link to={`/sell?edit=${item.id}`}>
+                                                <Link to={`/sell?edit=${item.id || item._id}`}>
                                                     <Button size="icon" variant="secondary" className="h-8 w-8 shadow-lg" style={{ display: item.isSold ? 'none' : 'inline-flex' }}>
                                                         <Edit size={14} />
                                                     </Button>
@@ -183,8 +221,8 @@ const Profile = () => {
                                         <Package size={48} className="text-muted-foreground mb-4" />
                                         <h3 className="font-semibold mb-2">No listings yet</h3>
                                         <p className="text-muted-foreground mb-4">Start selling your items on campus</p>
-                                        <Link to="/sell">
-                                            <Button>Post Your First Item</Button>
+                                        <Link to="/profile/apply-seller">
+                                            <Button>Apply to Sell</Button>
                                         </Link>
                                     </CardContent>
                                 </Card>

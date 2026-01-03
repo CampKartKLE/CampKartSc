@@ -11,11 +11,13 @@ const AuthContext = createContext(null);
 
 const USER_KEY = "campkart_user";
 const TOKEN_KEY = "campkart_token";
+const ONBOARDING_KEY = "campkart_onboarding_completed";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // -----------------------------
   // Load existing session on refresh
@@ -26,10 +28,20 @@ export const AuthProvider = ({ children }) => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
 
       if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
         setToken(storedToken);
 
-        // optional: refresh user data from backend
+        // Check if onboarding is needed
+        const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY) === 'true';
+
+        /*  
+        if (!onboardingCompleted) {
+          setShowOnboarding(true);
+        }
+        */
+
+        // Optional: refresh user data from backend
         getMeApi()
           .then((data) => {
             if (data?.user) {
@@ -57,6 +69,45 @@ export const AuthProvider = ({ children }) => {
     setToken(tokenStr);
     localStorage.setItem(USER_KEY, JSON.stringify(userObj));
     localStorage.setItem(TOKEN_KEY, tokenStr);
+
+    // Check if onboarding is needed
+    const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY) === 'true';
+
+    /*
+    if (!onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+    */
+  };
+
+  // -----------------------------
+  // Complete Onboarding
+  // -----------------------------
+  const completeOnboarding = (userType) => {
+    // Update local storage
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+
+    // Update user object with userType
+    const updatedUser = {
+      ...user,
+      userType: userType
+    };
+
+    setUser(updatedUser);
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+    // Hide the onboarding modal
+    setShowOnboarding(false);
+
+    return userType;
+  };
+
+  // -----------------------------
+  // Skip Onboarding (close button)
+  // -----------------------------
+  const skipOnboarding = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
   };
 
   // -----------------------------
@@ -90,8 +141,10 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    setShowOnboarding(false);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    // Note: We keep ONBOARDING_KEY so it persists across sessions
   };
 
   // -----------------------------
@@ -113,6 +166,7 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     loading,
+    showOnboarding,
     isAuthenticated: !!user,
     isVerifiedStudent: !!user?.isVerifiedStudent,
     login,
@@ -120,6 +174,9 @@ export const AuthProvider = ({ children }) => {
     signupVerify,
     logout,
     refreshUser,
+    completeOnboarding,
+    skipOnboarding,
+    setShowOnboarding
   };
 
   return (

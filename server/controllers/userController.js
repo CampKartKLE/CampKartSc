@@ -141,3 +141,83 @@ exports.changePassword = async (req, res) => {
         res.status(500).json({ message: "Failed to change password" });
     }
 };
+// -----------------------------
+// SELLER APPLICATION SYSTEM
+// -----------------------------
+exports.applyToBeSeller = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (user.role === 'seller' || user.isApprovedSeller) {
+            return res.status(400).json({ message: "You are already an approved seller" });
+        }
+
+        // AUTO-APPROVE
+        user.sellerApprovalStatus = 'approved';
+        user.role = 'seller';
+        user.isApprovedSeller = true;
+        user.sellerApplicationReason = req.body.reason || "Auto-approved";
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: "Seller account activated successfully!",
+            status: user.sellerApprovalStatus
+        });
+    } catch (err) {
+        console.error("ApplyToBeSeller error:", err);
+        res.status(500).json({ message: "Failed to activate seller account" });
+    }
+};
+
+// -----------------------------
+// ADMIN: MANAGE SELLER APPLICATIONS
+// -----------------------------
+exports.getPendingSellers = async (req, res) => {
+    try {
+        const pendingUsers = await User.find({ sellerApprovalStatus: 'pending' }).select("-password");
+        res.json(pendingUsers);
+    } catch (err) {
+        console.error("GetPendingSellers error:", err);
+        res.status(500).json({ message: "Failed to fetch pending applications" });
+    }
+};
+
+exports.updateSellerStatus = async (req, res) => {
+    try {
+        const { userId, status, reason } = req.body; // status: 'approved' | 'rejected'
+
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: "Invalid status selection" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.sellerApprovalStatus = status;
+        if (status === 'approved') {
+            user.role = 'seller';
+            user.isApprovedSeller = true;
+        } else {
+            user.isApprovedSeller = false;
+            // Optionally store rejection reason in a new field if needed
+        }
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: `Seller application ${status} for ${user.name}`,
+            user: {
+                id: user._id,
+                role: user.role,
+                status: user.sellerApprovalStatus
+            }
+        });
+    } catch (err) {
+        console.error("UpdateSellerStatus error:", err);
+        res.status(500).json({ message: "Failed to update seller status" });
+    }
+};
