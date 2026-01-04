@@ -26,6 +26,12 @@ const Header = () => {
         navigate('/signup');
     };
 
+    const handleSwitchMode = () => {
+        switchUiMode();
+        navigate('/dashboard');
+        setIsMenuOpen(false);
+    };
+
     return (
         <>
             <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
@@ -53,7 +59,7 @@ const Header = () => {
                                 {/* Role Switch Button (Simplified) */}
                                 {isApprovedSeller && (
                                     <button
-                                        onClick={switchUiMode}
+                                        onClick={handleSwitchMode}
                                         className={cn(
                                             "flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-xs font-bold uppercase tracking-wider",
                                             uiMode === 'buyer'
@@ -102,18 +108,15 @@ const Header = () => {
 
                                 <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
-                                {/* Sell Button (Visible contexts) */}
-                                <Link to="/sell">
+                                {/* Marketplace Button */}
+                                <Link to="/marketplace">
                                     <Button
                                         className={cn(
-                                            "rounded-full gap-2 shadow-md transition-shadow",
-                                            uiMode === 'seller'
-                                                ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 hover:shadow-emerald-500/40"
-                                                : "shadow-blue-500/20 hover:shadow-blue-500/40"
+                                            "rounded-full gap-2 shadow-md transition-shadow bg-campus-blue hover:bg-blue-700 shadow-blue-500/20 hover:shadow-blue-500/40"
                                         )}
                                     >
-                                        <PlusCircle size={18} />
-                                        SELL
+                                        <ShoppingBag size={18} />
+                                        Marketplace
                                     </Button>
                                 </Link>
 
@@ -197,7 +200,7 @@ const Header = () => {
                                 <>
                                     {isApprovedSeller && (
                                         <Button
-                                            onClick={() => { switchUiMode(); setIsMenuOpen(false); }}
+                                            onClick={handleSwitchMode}
                                             variant="outline"
                                             className="w-full justify-start gap-2"
                                         >
@@ -205,9 +208,9 @@ const Header = () => {
                                             Switch to {uiMode === 'buyer' ? 'Seller' : 'Buyer'} Mode
                                         </Button>
                                     )}
-                                    <Link to="/sell" onClick={() => setIsMenuOpen(false)}>
+                                    <Link to="/marketplace" onClick={() => setIsMenuOpen(false)}>
                                         <Button className="w-full justify-start gap-2 bg-campus-blue text-white">
-                                            <PlusCircle size={18} /> Sell an Item
+                                            <ShoppingBag size={18} /> Browse Marketplace
                                         </Button>
                                     </Link>
                                     <div className="border-t my-2 pt-2">
