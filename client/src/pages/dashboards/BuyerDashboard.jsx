@@ -101,17 +101,42 @@ const BuyerDashboard = ({ user }) => {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white border-none shadow-sm hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-semibold text-gray-500 uppercase flex items-center gap-2">
-                            <TrendingUp size={16} className="text-green-500" /> Price Alerts
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-gray-900">0 Notifications</div>
-                        <p className="text-xs text-gray-400 mt-1">No price drops yet</p>
-                    </CardContent>
-                </Card>
+                {!user?.isApprovedSeller && user?.role !== 'seller' && (
+                    <Card className="bg-gradient-to-br from-campus-blue to-blue-700 text-white border-none shadow-md hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden">
+                        <Link to="/profile/apply-seller" className="absolute inset-0 z-30"></Link>
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <TrendingUp size={80} />
+                        </div>
+                        <CardHeader className="pb-2 relative z-20">
+                            <CardTitle className="text-sm font-bold text-blue-100 uppercase flex items-center gap-2">
+                                <Star size={16} className="text-yellow-400" /> Sell on CampKart
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="relative z-20">
+                            <div className="text-2xl font-bold">Become a Seller</div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <p className="text-xs text-blue-100 font-medium">Start listing your items today</p>
+                                <div className="bg-white/20 p-1 rounded-full">
+                                    <TrendingUp size={12} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {(user?.isApprovedSeller || user?.role === 'seller') && (
+                    <Card className="bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-semibold text-gray-500 uppercase flex items-center gap-2">
+                                <TrendingUp size={16} className="text-green-500" /> Price Alerts
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-gray-900">0 Notifications</div>
+                            <p className="text-xs text-gray-400 mt-1">No price drops yet</p>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Recommendations */}
