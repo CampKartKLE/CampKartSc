@@ -178,7 +178,7 @@ const Sell = () => {
                 }
                 response = await createListing(submitData);
                 if (response.success) {
-                    addToast({ title: 'Success!', description: 'Your listing is now live' });
+                    addToast({ title: 'Submitted!', description: 'Your listing is submitted for admin approval.' });
                     const newId = response.data._id;
                     navigate(`/item/${newId}`);
                 }

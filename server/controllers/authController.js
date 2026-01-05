@@ -16,14 +16,9 @@ const sanitizeUser = (userDoc) => {
   return safe;
 };
 
-const AUTHORIZED_ADMINS = [
-  "royalraghu53@gmail.com",
-  "smkspurti@gmail.com",
-  "280pu1siddharth@gmail.com",
-  "harshithambanakar@gmail.com",
-  "manjunathsm891@gmail.com",
-  "snehacgoudar2005@gmail.com"
-];
+// Admins are identified ONLY by their role: "admin" in the database.
+// No hardcoded email lists allowed.
+
 
 /* ============================================================
     STEP 1 — REQUEST OTP
@@ -43,17 +38,18 @@ exports.requestOTP = async (req, res) => {
 
     // AUTH POLICY CHECK
     const isInstitutional = normalizedEmail.endsWith("@kletech.ac.in");
-    const isApprovedAdminEmail = AUTHORIZED_ADMINS.includes(normalizedEmail);
 
-    if (!isInstitutional && !isApprovedAdminEmail) {
+    // If it's a new signup (no user in DB), we ONLY allow institutional emails
+    if (!user && !isInstitutional) {
       return res.status(403).json({
-        message: "Only @kletech.ac.in emails allowed. Unauthorized Gmail account.",
+        message: "Only @kletech.ac.in emails allowed for new signups.",
       });
     }
 
-    // If it's a Gmail admin, they MUST already exist in DB
-    if (isApprovedAdminEmail && !user) {
-      return res.status(403).json({ message: "Admin account not found in database." });
+    // Existing users (including Gmail admins already in DB) can request OTP
+    if (user && !isInstitutional && user.role !== 'admin') {
+      // This covers cases where a non-institutional email somehow got in but isn't an admin
+      return res.status(403).json({ message: "Unauthorized account." });
     }
 
     // If it's a new signup (no user in DB), we require name/password
@@ -185,18 +181,18 @@ exports.login = async (req, res) => {
     // 1. If email is @kletech.ac.in -> allowed
     // 2. If email is NOT @kletech.ac.in -> check if in AUTHORIZED_ADMINS
     const isInstitutional = normalizedEmail.endsWith("@kletech.ac.in");
-    const isApprovedAdminEmail = AUTHORIZED_ADMINS.includes(normalizedEmail);
-
-    if (!isInstitutional && !isApprovedAdminEmail) {
-      return res.status(403).json({
-        message: "Access Denied. Only institutional emails or authorized admins allowed."
-      });
-    }
 
     const user = await User.findOne({ email: normalizedEmail });
 
-    if (isApprovedAdminEmail && (!user || user.role !== 'admin')) {
-      return res.status(403).json({ message: "Admin privileges required for this account." });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Role-based access enforcement
+    if (!isInstitutional && user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Access Denied. Only institutional emails or authorized admins allowed."
+      });
     }
 
     if (!user) {

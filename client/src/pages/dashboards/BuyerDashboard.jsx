@@ -39,19 +39,12 @@ const BuyerDashboard = ({ user }) => {
             // We still refresh to ensure server consistency and get full objects for the bottom list
             await refreshUser();
 
-<<<<<<< HEAD
             // Refresh local wishlist stats
             const wishlistRes = await getWishlist();
             if (wishlistRes.success) {
                 setSavedItems(wishlistRes.data.slice(0, 3));
                 setWishlistCount(wishlistRes.data.length);
             }
-=======
-            // Refresh local wishlist stats (bottom list)
-            const wishlistData = await getWishlist();
-            setSavedItems(wishlistData.slice(0, 3));
-            setWishlistCount(wishlistData.length);
->>>>>>> 49fe6f3222bf57fc4237bc7a5839841a671f4e44
         } catch (error) {
             console.error('Failed to toggle wishlist:', error);
             // Revert on failure

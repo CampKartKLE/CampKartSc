@@ -11,7 +11,7 @@ import { cn } from '../../lib/utils';
 
 const Header = () => {
     const { user, logout, isAuthenticated } = useAuth();
-    const { currentRole, ROLES, uiMode, switchUiMode, isApprovedSeller } = useRole();
+    const { currentRole, ROLES, uiMode, switchUiMode, isApprovedSeller, sellerApplicationStatus } = useRole();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const navigate = useNavigate();
@@ -34,6 +34,12 @@ const Header = () => {
 
     return (
         <>
+            {isAuthenticated && sellerApplicationStatus === 'pending' && (
+                <div className="bg-amber-500 text-white text-[10px] uppercase font-black tracking-widest py-1.5 text-center flex items-center justify-center gap-2">
+                    <Activity size={12} className="animate-pulse" />
+                    Seller Application Pending Admin Approval
+                </div>
+            )}
             <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
                 <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-6">
                     {/* Logo & Brand */}

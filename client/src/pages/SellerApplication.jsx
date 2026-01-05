@@ -34,7 +34,7 @@ const SellerApplication = () => {
             if (data.success) {
                 addToast({ title: 'Application Submitted', description: 'Admin will review your request soon.' });
                 await refreshUser();
-                setLocalSubmitted(true);
+                navigate('/marketplace');
             } else {
                 addToast({ title: 'Error', description: data.message || 'Failed to activate account', variant: 'destructive' });
             }

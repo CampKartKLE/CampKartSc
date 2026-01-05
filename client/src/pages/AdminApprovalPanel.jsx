@@ -47,8 +47,8 @@ const AdminApprovalPanel = () => {
 
             if (data.success) {
                 addToast({
-                    title: status === 'active' ? 'Listing Approved' : 'Listing Rejected',
-                    description: `Item has been ${status === 'active' ? 'published' : 'rejected'}.`
+                    title: status === 'approved' ? 'Listing Approved' : 'Listing Rejected',
+                    description: `Item has been ${status === 'approved' ? 'published' : 'rejected'}.`
                 });
                 setPendingListings(pendingListings.filter(l => l._id !== listingId));
             } else {
@@ -123,7 +123,7 @@ const AdminApprovalPanel = () => {
 
                                             <div className="flex flex-col gap-2">
                                                 <Button
-                                                    onClick={() => handleAction(item._id, 'active')}
+                                                    onClick={() => handleAction(item._id, 'approved')}
                                                     className="bg-emerald-600 hover:bg-emerald-700 rounded-xl gap-2 font-bold w-full"
                                                 >
                                                     <UserCheck size={16} /> Approve

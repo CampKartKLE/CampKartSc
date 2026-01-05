@@ -280,10 +280,10 @@ exports.getPendingListings = async (req, res) => {
 
 exports.updateListingStatus = async (req, res) => {
   try {
-    const { status, comments } = req.body; // status: 'active' | 'rejected'
+    const { status, comments } = req.body; // status: 'approved' | 'rejected'
     const listingId = req.params.id;
 
-    if (!['active', 'rejected'].includes(status)) {
+    if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 

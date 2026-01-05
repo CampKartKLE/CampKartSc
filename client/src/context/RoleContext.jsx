@@ -15,6 +15,7 @@ export const RoleProvider = ({ children }) => {
     const [currentRole, setCurrentRole] = useState(ROLES.CUSTOMER);
     const [uiMode, setUiMode] = useState('buyer'); // 'buyer' or 'seller'
     const [isApprovedSeller, setIsApprovedSeller] = useState(false);
+    const [sellerApplicationStatus, setSellerApplicationStatus] = useState('none');
 
     useEffect(() => {
         if (isAuthenticated && user) {
@@ -22,6 +23,7 @@ export const RoleProvider = ({ children }) => {
             const role = user.role || ROLES.CUSTOMER;
             setCurrentRole(role);
             setIsApprovedSeller(user.role === ROLES.SELLER || !!user.isApprovedSeller);
+            setSellerApplicationStatus(user.sellerApplication?.status || 'none');
 
             // UI Mode persistence for sellers
             const savedMode = localStorage.getItem('campkart_ui_mode');
@@ -49,6 +51,7 @@ export const RoleProvider = ({ children }) => {
         currentRole,
         uiMode,
         isApprovedSeller,
+        sellerApplicationStatus,
         ROLES,
         switchUiMode,
         isSeller: currentRole === ROLES.SELLER,

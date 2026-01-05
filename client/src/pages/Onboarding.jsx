@@ -25,7 +25,9 @@ const Onboarding = () => {
                 addToast({ title: 'Welcome!', description: 'You are now ready to shop on CampKart.' });
                 navigate('/marketplace');
             } else {
-                // For seller, we redirect to the application page
+                // For seller, we also call onboard to mark completed, then redirect to application
+                await axiosClient.patch('/users/onboard', { role: 'customer' });
+                await refreshUser();
                 navigate('/profile/apply-seller');
             }
         } catch (error) {

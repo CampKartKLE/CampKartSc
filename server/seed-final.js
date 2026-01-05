@@ -4,14 +4,8 @@ const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const AUTHORIZED_ADMINS = [
-    "royalraghu53@gmail.com",
-    "smkspurti@gmail.com",
-    "280pu1siddharth@gmail.com",
-    "harshithambanakar@gmail.com",
-    "manjunathsm891@gmail.com",
-    "snehacgoudar2005@gmail.com"
-];
+// Seed script should be generic.
+const AUTHORIZED_ADMINS = []; // Empty by default for safety
 
 const seed = async () => {
     try {

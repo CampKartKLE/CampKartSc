@@ -13,9 +13,9 @@ const migrateListings = async () => {
         if (listings.length > 0) {
             const result = await Listing.updateMany(
                 { status: { $exists: false } },
-                { $set: { status: 'active' } }
+                { $set: { status: 'approved' } }
             );
-            console.log(`Updated ${result.modifiedCount} listings to active.`);
+            console.log(`Updated ${result.modifiedCount} listings to approved.`);
         }
 
         process.exit(0);

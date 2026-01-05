@@ -19,7 +19,7 @@ const UserModeration = () => {
         try {
             const { data } = await axiosClient.get(`/admin/users/search/${searchQuery}`);
             if (data.success) {
-                setUser(data.data.user);
+                setUser(data.data);
             } else {
                 addToast({ title: 'Not Found', description: 'No user found with this email', variant: 'destructive' });
             }

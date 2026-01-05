@@ -40,9 +40,6 @@ router.post("/", authMiddleware, isSeller, upload.array("images", 5), listingCon
 router.put("/:id", authMiddleware, isSeller, upload.array("images", 5), listingController.updateListing);
 router.delete("/:id", authMiddleware, isSeller, listingController.deleteListing);
 
-router.put("/:id", authMiddleware, isSeller, upload.array("images", 5), listingController.updateListing);
-router.delete("/:id", authMiddleware, isSeller, listingController.deleteListing);
-
 // Seller Dashboard Listings (all statuses)
 router.get("/seller/my-listings", authMiddleware, isSeller, listingController.getMyListings);
 

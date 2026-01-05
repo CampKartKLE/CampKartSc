@@ -8,8 +8,8 @@ const checkUser = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Connected to DB');
 
-        const email = '01fe23bcs073@kletech.ac.in';
-        const password = '123456';
+        const email = process.argv[2] || '01fe23bcs073@kletech.ac.in'; // Default for quick check if needed, but CLI preferred
+        const password = process.argv[3] || '123456';
 
         const user = await User.findOne({ email });
 

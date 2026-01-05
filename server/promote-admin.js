@@ -2,14 +2,16 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 require('dotenv').config();
 
-const admins = [
-    'royalraghu53@gmail.com',
-    'smkspurti@gmail.com',
-    '280pu1siddharth@gmail.com',
-    'harshithambanakar@gmail.com',
-    'manjunathsm891@gmail.com',
-    'snehacgoudar2005@gmail.com'
-];
+// Admins should be promoted via CLI or DB directly.
+// Usage: node promote-admin.js email@example.com
+const emailArg = process.argv[2];
+
+if (!emailArg) {
+    console.log('Please provide an email: node promote-admin.js user@kletech.ac.in');
+    process.exit(1);
+}
+
+const admins = [emailArg.toLowerCase().trim()];
 
 const promoteAdmins = async () => {
     try {
