@@ -11,10 +11,11 @@ import { applySellerApi } from '../api/auth';
 
 const SellerApplication = () => {
     const { user, refreshUser } = useAuth();
-    const { isApprovedSeller } = useRole();
+    const { currentRole } = useRole();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitted, setSubmitted] = useState(false); // No pending state anymore
+    const [localSubmitted, setLocalSubmitted] = useState(false);
     const [reason, setReason] = useState('');
+    const [category, setCategory] = useState('Electronics');
     const [agreed1, setAgreed1] = useState(false);
     const [agreed2, setAgreed2] = useState(false);
     const { addToast } = useToast();
@@ -28,13 +29,12 @@ const SellerApplication = () => {
 
         setIsSubmitting(true);
         try {
-            const data = await applySellerApi(reason);
+            const data = await applySellerApi(reason, category);
 
             if (data.success) {
-                // Instant Success
-                addToast({ title: 'Success!', description: 'Your seller account has been activated.' });
+                addToast({ title: 'Application Submitted', description: 'Admin will review your request soon.' });
                 await refreshUser();
-                navigate('/dashboard');
+                setLocalSubmitted(true);
             } else {
                 addToast({ title: 'Error', description: data.message || 'Failed to activate account', variant: 'destructive' });
             }
@@ -46,28 +46,38 @@ const SellerApplication = () => {
         }
     };
 
-    if (isApprovedSeller) {
+    const isPending = user?.sellerApplication?.status === 'pending';
+    const isApproved = user?.role === 'seller';
+
+    if (isApproved) {
         return (
-            <div className="container mx-auto px-4 py-20 text-center">
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <ShieldCheck size={40} className="text-emerald-600" />
+            <div className="container mx-auto px-4 py-20 text-center animate-in fade-in duration-700">
+                <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-8 ring-emerald-50/50">
+                    <ShieldCheck size={48} className="drop-shadow-sm" />
                 </div>
-                <h1 className="text-3xl font-black text-gray-900 mb-2">You are a Verified Seller!</h1>
-                <p className="text-gray-500 mb-8">You can now list items and access the seller dashboard.</p>
-                <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+                <h1 className="text-4xl font-black text-gray-900 mb-3 tracking-tight">Verified Seller Account</h1>
+                <p className="text-gray-500 text-lg mb-10 max-w-md mx-auto">Congratulations! Your account is verified. You can now start listing your camping gear.</p>
+                <div className="flex justify-center gap-4">
+                    <Button size="lg" className="rounded-2xl px-8 shadow-lg shadow-blue-500/20" onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+                    <Button size="lg" variant="outline" className="rounded-2xl px-8" onClick={() => navigate('/profile')}>My Profile</Button>
+                </div>
             </div>
         );
     }
 
-    if (submitted) {
+    if (isPending || localSubmitted) {
         return (
-            <div className="container mx-auto px-4 py-20 text-center">
-                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 size={40} className="text-amber-600" />
+            <div className="container mx-auto px-4 py-20 text-center animate-in scale-in duration-500">
+                <div className="relative w-24 h-24 mx-auto mb-8">
+                    <div className="absolute inset-0 bg-blue-100 rounded-full animate-pulse"></div>
+                    <div className="relative z-10 w-full h-full bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                        <CheckCircle2 size={48} />
+                    </div>
                 </div>
-                <h1 className="text-3xl font-black text-gray-900 mb-2">Application Pending</h1>
-                <p className="text-gray-500 mb-8">We are currently reviewing your application. This usually takes 24-48 hours.</p>
-                <Button variant="outline" onClick={() => navigate('/profile')}>Back to Profile</Button>
+                <h1 className="text-4xl font-black text-gray-900 mb-3 tracking-tight">Application Received</h1>
+                <p className="text-gray-500 text-lg mb-2">We are currently reviewing your seller profile.</p>
+                <p className="text-gray-400 text-sm mb-10">This usually takes 24 hours. You will be notified once approved.</p>
+                <Button size="lg" variant="outline" className="rounded-2xl px-8 border-gray-200" onClick={() => navigate('/profile')}>Back to Profile</Button>
             </div>
         );
     }
@@ -116,15 +126,32 @@ const SellerApplication = () => {
                     </CardHeader>
                     <CardContent className="p-8">
                         <div className="mb-6">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Primary Sales Category *</label>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="w-full p-4 rounded-xl border border-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50"
+                            >
+                                <option>Electronics</option>
+                                <option>Books</option>
+                                <option>Camping Gear</option>
+                                <option>Vehicles (Cycles)</option>
+                                <option>Accommodation / Renting</option>
+                                <option>Fashion / Clothing</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-6">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Why do you want to sell on CampKart? *</label>
                             <textarea
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
-                                className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[120px] text-sm"
+                                className="w-full p-4 rounded-xl border border-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[120px] text-sm bg-gray-50"
                                 placeholder="Tell us about the gear you want to sell..."
                                 required
                             />
-                            <p className="text-[10px] text-gray-400 mt-2">Minimum 20 characters required.</p>
+                            <p className="text-[10px] text-gray-400 mt-2 font-medium">Minimum 20 characters required.</p>
                         </div>
 
                         <div className="space-y-4 mb-8">

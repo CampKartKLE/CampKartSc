@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useRole } from './context/RoleContext';
 import Header from './components/layout/Header';
@@ -19,11 +19,13 @@ import Terms from './pages/Terms';
 import Help from './pages/Help';
 import Support from './pages/Support';
 import SellerApplication from './pages/SellerApplication';
-import AdminApprovalPanel from './pages/AdminApprovalPanel';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import Onboarding from './pages/Onboarding';
 import NotFound from './pages/NotFound';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -35,6 +37,31 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to onboarding if not completed and not an admin
+  // We check location.pathname to avoid infinite redirect loops
+  if (user && !user.onboardingCompleted && user.role !== 'admin' && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  const { isAdmin } = useRole();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-campus-blue"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -93,11 +120,19 @@ function App() {
             }
           />
           <Route
-            path="/admin"
+            path="/onboarding"
             element={
               <ProtectedRoute>
-                <AdminApprovalPanel />
+                <Onboarding />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
             }
           />
           <Route path="/safety" element={<Safety />} />

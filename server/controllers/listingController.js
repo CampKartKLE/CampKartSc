@@ -36,8 +36,8 @@ exports.getAllListings = async (req, res) => {
           { isSold: true, soldAt: { $gte: sevenDaysAgo } }, // Sold within 7 days
         ],
       },
-      // ONLY ACTIVE LISTINGS
-      { status: 'active' }
+      // ONLY APPROVED LISTINGS
+      { status: 'approved' }
     ];
 
     // Sorting
@@ -50,11 +50,10 @@ exports.getAllListings = async (req, res) => {
     else if (sort === "newest") sortOption = { createdAt: -1 };
 
     const listings = await Listing.find(query).sort(sortOption);
-
-    res.json(listings);
+    res.json({ success: true, data: listings });
   } catch (err) {
     console.error("GetAllListings error:", err);
-    res.status(500).json({ message: "Failed to fetch listings" });
+    res.status(500).json({ success: false, message: "Failed to fetch listings" });
   }
 };
 
@@ -79,7 +78,7 @@ exports.getListingById = async (req, res) => {
       await listing.save();
     }
 
-    res.json(listing);
+    res.json({ success: true, data: listing });
   } catch (err) {
     console.error("GetListing error:", err);
     res.status(500).json({ message: "Failed to fetch listing" });
@@ -121,9 +120,10 @@ exports.createListing = async (req, res) => {
       },
       views: 0,
       isAvailable: true,
+      status: 'pending',
     });
 
-    res.status(201).json({ success: true, listing: newListing });
+    res.status(201).json({ success: true, data: newListing });
   } catch (err) {
     console.error("CreateListing error:", err);
     res.status(500).json({ message: "Failed to create listing" });
@@ -162,7 +162,7 @@ exports.updateListing = async (req, res) => {
       new: true,
     });
 
-    res.json(updated);
+    res.json({ success: true, data: updated });
   } catch (err) {
     console.error("UpdateListing error:", err);
     res.status(500).json({ message: "Failed to update listing" });
@@ -184,7 +184,7 @@ exports.deleteListing = async (req, res) => {
 
     await Listing.findByIdAndDelete(req.params.id);
 
-    res.json({ message: "Listing deleted" });
+    res.json({ success: true, message: "Listing deleted" });
   } catch (err) {
     console.error("DeleteListing error:", err);
     res.status(500).json({ message: "Failed to delete listing" });
@@ -245,7 +245,7 @@ exports.toggleLike = async (req, res) => {
 
     await listing.save();
 
-    res.json({ success: true, isLiked: !isLiked, likes: listing.likes });
+    res.json({ success: true, data: { isLiked: !isLiked, likes: listing.likes } });
   } catch (err) {
     console.error("ToggleLike error:", err);
     res.status(500).json({ message: "Failed to toggle like" });
@@ -257,9 +257,8 @@ exports.toggleLike = async (req, res) => {
 // -----------------------------
 exports.getMyListings = async (req, res) => {
   try {
-    // Return ALL listings for this seller (active, pending, rejected)
     const listings = await Listing.find({ 'seller.id': req.user.id }).sort({ createdAt: -1 });
-    res.json(listings);
+    res.json({ success: true, data: listings });
   } catch (err) {
     console.error("GetMyListings error:", err);
     res.status(500).json({ message: "Failed to fetch seller listings" });
@@ -272,7 +271,7 @@ exports.getMyListings = async (req, res) => {
 exports.getPendingListings = async (req, res) => {
   try {
     const listings = await Listing.find({ status: 'pending' }).sort({ createdAt: -1 });
-    res.json(listings);
+    res.json({ success: true, data: listings });
   } catch (err) {
     console.error("GetPendingListings error:", err);
     res.status(500).json({ message: "Failed to fetch pending listings" });
@@ -296,7 +295,7 @@ exports.updateListingStatus = async (req, res) => {
 
     await listing.save();
 
-    res.json({ success: true, listing });
+    res.json({ success: true, data: listing });
   } catch (err) {
     console.error("UpdateListingStatus error:", err);
     res.status(500).json({ message: "Failed to update listing status" });

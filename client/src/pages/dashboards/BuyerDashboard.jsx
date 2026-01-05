@@ -22,9 +22,11 @@ const BuyerDashboard = ({ user }) => {
             await refreshUser();
 
             // Refresh local wishlist stats
-            const wishlistData = await getWishlist();
-            setSavedItems(wishlistData.slice(0, 3));
-            setWishlistCount(wishlistData.length);
+            const wishlistRes = await getWishlist();
+            if (wishlistRes.success) {
+                setSavedItems(wishlistRes.data.slice(0, 3));
+                setWishlistCount(wishlistRes.data.length);
+            }
         } catch (error) {
             console.error('Failed to toggle wishlist:', error);
         }
@@ -34,7 +36,8 @@ const BuyerDashboard = ({ user }) => {
         const fetchData = async () => {
             try {
                 // Fetch all listings for recommendations
-                const allProducts = await getListings();
+                const listingsRes = await getListings();
+                const allProducts = listingsRes.success ? listingsRes.data : [];
                 setRecommendedItems(allProducts.slice(0, 4));
 
                 // Set recent views count (based on total available items or user activity)
@@ -42,9 +45,11 @@ const BuyerDashboard = ({ user }) => {
 
                 // Fetch actual wishlist
                 try {
-                    const wishlistData = await getWishlist();
-                    setSavedItems(wishlistData.slice(0, 3));
-                    setWishlistCount(wishlistData.length);
+                    const wishlistRes = await getWishlist();
+                    if (wishlistRes.success) {
+                        setSavedItems(wishlistRes.data.slice(0, 3));
+                        setWishlistCount(wishlistRes.data.length);
+                    }
                 } catch (wishlistError) {
                     // If wishlist fetch fails, fallback to 0
                     console.error('Failed to fetch wishlist:', wishlistError);
@@ -169,7 +174,7 @@ const BuyerDashboard = ({ user }) => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {savedItems.map(item => (
-                            <Link key={item.id} to={`/item/${item.id}`} className="group">
+                            <Link key={item._id} to={`/item/${item._id}`} className="group">
                                 <div className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-transparent group-hover:border-blue-100 transition-all">
                                     <img src={item.images[0]} alt={item.title} className="w-16 h-16 rounded-xl object-cover" />
                                     <div className="flex-1 min-w-0">

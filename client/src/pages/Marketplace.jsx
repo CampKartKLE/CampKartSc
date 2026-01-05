@@ -42,8 +42,10 @@ const Marketplace = () => {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const data = await getListings(filters);
-            setProducts(data);
+            const response = await getListings(filters);
+            if (response.success) {
+                setProducts(response.data);
+            }
         } catch (error) {
             addToast({ title: 'Error', description: 'Failed to load products', variant: 'destructive' });
         } finally {
@@ -181,7 +183,7 @@ const Marketplace = () => {
                                     key={product._id}
                                     product={{
                                         ...product,
-                                        isOwner: product.seller?.id === user?.id
+                                        isOwner: (product.seller?._id || product.seller?.id) === (user?._id || user?.id)
                                     }}
                                     isFavorite={user?.wishlist?.includes(product._id)}
                                     onToggleFavorite={handleToggleWishlist}

@@ -165,8 +165,10 @@ const Sell = () => {
             if (editId) {
                 // Update
                 response = await updateListing(editId, submitData);
-                addToast({ title: 'Updated!', description: 'Listing updated successfully' });
-                navigate(`/item/${response._id}`);
+                if (response.success) {
+                    addToast({ title: 'Updated!', description: 'Listing updated successfully' });
+                    navigate(`/item/${response.data._id}`);
+                }
             } else {
                 // Create
                 if (newFiles.length === 0) {
@@ -175,10 +177,11 @@ const Sell = () => {
                     return;
                 }
                 response = await createListing(submitData);
-                addToast({ title: 'Success!', description: 'Your listing is now live' });
-                // Response structure might vary, check controller
-                const newId = response.listing ? response.listing._id : response._id;
-                navigate(`/item/${newId}`);
+                if (response.success) {
+                    addToast({ title: 'Success!', description: 'Your listing is now live' });
+                    const newId = response.data._id;
+                    navigate(`/item/${newId}`);
+                }
             }
 
             localStorage.removeItem('sell_form_draft');

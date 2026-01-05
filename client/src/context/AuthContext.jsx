@@ -29,6 +29,10 @@ export const AuthProvider = ({ children }) => {
 
       if (storedUser && storedToken) {
         const parsedUser = JSON.parse(storedUser);
+        // Defensive check for new fields
+        if (parsedUser && parsedUser.onboardingCompleted === undefined) {
+          parsedUser.onboardingCompleted = parsedUser.role === 'admin';
+        }
         setUser(parsedUser);
         setToken(storedToken);
 
@@ -151,11 +155,17 @@ export const AuthProvider = ({ children }) => {
   // REFRESH USER (optional)
   // -----------------------------
   const refreshUser = async () => {
+    if (!token) return; // Guard against unauthenticated refresh
     try {
       const data = await getMeApi();
       if (data?.user) {
-        setUser(data.user);
-        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        // Ensure the onboardingCompleted field is clearly defined
+        const updatedUser = {
+          ...data.user,
+          onboardingCompleted: data.user.onboardingCompleted ?? (data.user.role === 'admin')
+        };
+        setUser(updatedUser);
+        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
       }
     } catch (err) {
       console.error("Failed to refresh user", err);

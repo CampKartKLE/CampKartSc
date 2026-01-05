@@ -22,15 +22,17 @@ const SellerDashboard = ({ user }) => {
         const fetchSellerData = async () => {
             try {
                 // 1. Fetch Listings
-                const userListings = await getMyListings();
+                const listingsRes = await getMyListings();
+                const userListings = listingsRes.success ? listingsRes.data : [];
                 setMyListings(userListings);
 
                 // 2. Fetch Conversations
-                const userConversations = await getConversations();
+                const conversationsRes = await getConversations();
+                const userConversations = conversationsRes.success ? conversationsRes.data : [];
                 setConversations(userConversations.slice(0, 3)); // Top 3 for sneak peek
 
                 // 3. Calculate Stats
-                const activeCount = userListings.filter(l => l.status === 'active' && !l.isSold).length;
+                const activeCount = userListings.filter(l => l.status === 'approved' && !l.isSold).length;
                 const earnings = userListings.filter(l => l.isSold).reduce((sum, l) => sum + Number(l.price), 0);
                 const totalViews = userListings.reduce((sum, l) => sum + (l.views || 0), 0);
                 const activeChats = userConversations.length;
@@ -56,7 +58,7 @@ const SellerDashboard = ({ user }) => {
         if (item.isSold) return <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Sold</span>;
         if (item.status === 'pending') return <span className="bg-amber-100 text-amber-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Pending</span>;
         if (item.status === 'rejected') return <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Rejected</span>;
-        return <span className="bg-emerald-100 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Active</span>;
+        return <span className="bg-emerald-100 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Approved</span>;
     };
 
     const getOtherParticipant = (conversation) => {

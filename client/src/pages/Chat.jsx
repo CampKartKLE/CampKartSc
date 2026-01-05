@@ -18,8 +18,10 @@ const Chat = () => {
     useEffect(() => {
         const fetchConversations = async () => {
             try {
-                const data = await getConversations();
-                setConversations(data);
+                const response = await getConversations();
+                if (response.success) {
+                    setConversations(response.data);
+                }
             } catch (error) {
                 console.error("Failed to fetch conversations", error);
             } finally {
@@ -32,8 +34,10 @@ const Chat = () => {
     const handleChatSelect = async (chat) => {
         setSelectedChat(chat);
         try {
-            const msgs = await getMessages(chat._id);
-            setMessages(msgs);
+            const response = await getMessages(chat._id);
+            if (response.success) {
+                setMessages(response.data);
+            }
         } catch (error) {
             console.error("Failed to fetch messages", error);
         }
@@ -43,19 +47,22 @@ const Chat = () => {
         e.preventDefault();
         if (message.trim() && selectedChat) {
             try {
-                const newMsg = await sendMessage(selectedChat._id, message);
-                setMessages([...messages, newMsg]);
-                setMessage('');
+                const response = await sendMessage(selectedChat._id, message);
+                if (response.success) {
+                    const newMsg = response.data;
+                    setMessages([...messages, newMsg]);
+                    setMessage('');
 
-                // Update last message in conversation list
-                setConversations(prev => {
-                    const updated = prev.map(c =>
-                        c._id === selectedChat._id
-                            ? { ...c, lastMessage: newMsg, lastMessageAt: newMsg.createdAt }
-                            : c
-                    );
-                    return updated.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
-                });
+                    // Update last message in conversation list
+                    setConversations(prev => {
+                        const updated = prev.map(c =>
+                            c._id === selectedChat._id
+                                ? { ...c, lastMessage: newMsg, lastMessageAt: newMsg.createdAt }
+                                : c
+                        );
+                        return updated.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+                    });
+                }
 
             } catch (error) {
                 console.error("Failed to send message", error);
@@ -142,7 +149,7 @@ const Chat = () => {
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg) => {
-                                    const isMe = msg.sender === user?._id;
+                                    const isMe = msg.sender === (user?._id || user?.id);
                                     return (
                                         <div
                                             key={msg._id}

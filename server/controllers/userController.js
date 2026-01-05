@@ -28,7 +28,7 @@ exports.toggleWishlist = async (req, res) => {
 
         await user.save();
 
-        res.json({ success: true, wishlist: user.wishlist, isFavorited: !isFavorited });
+        res.json({ success: true, data: { wishlist: user.wishlist, isFavorited: !isFavorited } });
     } catch (err) {
         console.error("ToggleWishlist error:", err);
         res.status(500).json({ message: "Failed to update wishlist" });
@@ -43,7 +43,7 @@ exports.getWishlist = async (req, res) => {
         const user = await User.findById(req.user.id).populate("wishlist");
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        res.json(user.wishlist);
+        res.json({ success: true, data: user.wishlist });
     } catch (err) {
         console.error("GetWishlist error:", err);
         res.status(500).json({ message: "Failed to fetch wishlist" });
@@ -71,7 +71,7 @@ exports.updateProfile = async (req, res) => {
 
         // Return sanitized user (without password)
         const { password, ...sanitizedUser } = user.toObject();
-        res.json({ success: true, user: sanitizedUser });
+        res.json({ success: true, data: { user: sanitizedUser } });
     } catch (err) {
         console.error("UpdateProfile error:", err);
         res.status(500).json({ message: "Failed to update profile" });
@@ -99,7 +99,7 @@ exports.updateNotificationPreferences = async (req, res) => {
 
         await user.save();
 
-        res.json({ success: true, notifications: user.notifications });
+        res.json({ success: true, data: { notifications: user.notifications } });
     } catch (err) {
         console.error("UpdateNotificationPreferences error:", err);
         res.status(500).json({ message: "Failed to update notification preferences" });
@@ -147,77 +147,67 @@ exports.changePassword = async (req, res) => {
 exports.applyToBeSeller = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         if (user.role === 'seller' || user.isApprovedSeller) {
-            return res.status(400).json({ message: "You are already an approved seller" });
+            return res.status(400).json({ success: false, message: "You are already an approved seller" });
         }
 
-        // AUTO-APPROVE
-        user.sellerApprovalStatus = 'approved';
-        user.role = 'seller';
-        user.isApprovedSeller = true;
-        user.sellerApplicationReason = req.body.reason || "Auto-approved";
+        // SUBMIT FOR APPROVAL
+        user.sellerApplication = {
+            reason: req.body.reason,
+            category: req.body.category,
+            status: 'pending',
+            appliedAt: new Date()
+        };
+
+        // user.role stays 'customer' until approved
+        user.isApprovedSeller = false;
 
         await user.save();
 
         res.json({
             success: true,
-            message: "Seller account activated successfully!",
-            status: user.sellerApprovalStatus
+            message: "Application submitted for admin review!",
+            data: { status: user.sellerApplication.status }
         });
     } catch (err) {
         console.error("ApplyToBeSeller error:", err);
-        res.status(500).json({ message: "Failed to activate seller account" });
+        res.status(500).json({ success: false, message: "Failed to submit seller application" });
     }
 };
 
 // -----------------------------
-// ADMIN: MANAGE SELLER APPLICATIONS
+// COMPLETE ONBOARDING
 // -----------------------------
-exports.getPendingSellers = async (req, res) => {
+exports.completeOnboarding = async (req, res) => {
     try {
-        const pendingUsers = await User.find({ sellerApprovalStatus: 'pending' }).select("-password");
-        res.json(pendingUsers);
-    } catch (err) {
-        console.error("GetPendingSellers error:", err);
-        res.status(500).json({ message: "Failed to fetch pending applications" });
-    }
-};
+        const { role } = req.body; // 'customer' or 'seller' (pending)
+        const user = await User.findById(req.user.id);
 
-exports.updateSellerStatus = async (req, res) => {
-    try {
-        const { userId, status, reason } = req.body; // status: 'approved' | 'rejected'
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-        if (!['approved', 'rejected'].includes(status)) {
-            return res.status(400).json({ message: "Invalid status selection" });
+        user.onboardingCompleted = true;
+
+        if (role === 'customer') {
+            user.role = 'customer';
         }
-
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        user.sellerApprovalStatus = status;
-        if (status === 'approved') {
-            user.role = 'seller';
-            user.isApprovedSeller = true;
-        } else {
-            user.isApprovedSeller = false;
-            // Optionally store rejection reason in a new field if needed
-        }
+        // If role is 'seller', we expect them to fill application immediately or later, 
+        // but for now we mark onboarding as done so they don't see the screen again.
 
         await user.save();
 
         res.json({
             success: true,
-            message: `Seller application ${status} for ${user.name}`,
-            user: {
+            message: "Onboarding completed",
+            data: {
                 id: user._id,
                 role: user.role,
-                status: user.sellerApprovalStatus
+                onboardingCompleted: user.onboardingCompleted
             }
         });
     } catch (err) {
-        console.error("UpdateSellerStatus error:", err);
-        res.status(500).json({ message: "Failed to update seller status" });
+        console.error("CompleteOnboarding error:", err);
+        res.status(500).json({ success: false, message: "Failed to complete onboarding" });
     }
 };

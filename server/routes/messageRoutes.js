@@ -15,7 +15,7 @@ router.get('/conversations', protect, async (req, res) => {
             .populate('lastMessage')
             .sort({ lastMessageAt: -1 });
 
-        res.json(conversations);
+        res.json({ success: true, data: conversations });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
@@ -37,7 +37,7 @@ router.post('/conversations', protect, async (req, res) => {
         }).populate('participants', 'name avatar');
 
         if (conversation) {
-            return res.json(conversation);
+            return res.json({ success: true, data: conversation });
         }
 
         // Create new conversation
@@ -46,7 +46,7 @@ router.post('/conversations', protect, async (req, res) => {
         });
 
         conversation = await conversation.populate('participants', 'name avatar');
-        res.json(conversation);
+        res.json({ success: true, data: conversation });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
@@ -61,7 +61,7 @@ router.get('/messages/:conversationId', protect, async (req, res) => {
         })
             .sort({ createdAt: 1 }); // Oldest first
 
-        res.json(messages);
+        res.json({ success: true, data: messages });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
@@ -89,7 +89,7 @@ router.post('/messages', protect, async (req, res) => {
             lastMessageAt: Date.now()
         });
 
-        res.json(newMessage);
+        res.json({ success: true, data: newMessage });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });

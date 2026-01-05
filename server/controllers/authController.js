@@ -16,6 +16,15 @@ const sanitizeUser = (userDoc) => {
   return safe;
 };
 
+const AUTHORIZED_ADMINS = [
+  "royalraghu53@gmail.com",
+  "smkspurti@gmail.com",
+  "280pu1siddharth@gmail.com",
+  "harshithambanakar@gmail.com",
+  "manjunathsm891@gmail.com",
+  "snehacgoudar2005@gmail.com"
+];
+
 /* ============================================================
     STEP 1 — REQUEST OTP
    ============================================================ */
@@ -23,42 +32,65 @@ exports.requestOTP = async (req, res) => {
   try {
     const { name, email, password, phone, campus } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
     }
 
-    // student domain restriction
     const normalizedEmail = email.toLowerCase().trim();
-    if (!normalizedEmail.endsWith(".ac.in") && !normalizedEmail.endsWith(".edu")) {
-      return res.status(400).json({
-        message: "Only .ac.in or .edu emails allowed for signup",
+
+    // Find if user exists in DB
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // AUTH POLICY CHECK
+    const isInstitutional = normalizedEmail.endsWith("@kletech.ac.in");
+    const isApprovedAdminEmail = AUTHORIZED_ADMINS.includes(normalizedEmail);
+
+    if (!isInstitutional && !isApprovedAdminEmail) {
+      return res.status(403).json({
+        message: "Only @kletech.ac.in emails allowed. Unauthorized Gmail account.",
       });
     }
 
-    // check if user already exists
-    const existing = await User.findOne({ email: normalizedEmail });
-    if (existing) {
-      return res.status(400).json({ message: "User already exists" });
+    // If it's a Gmail admin, they MUST already exist in DB
+    if (isApprovedAdminEmail && !user) {
+      return res.status(403).json({ message: "Admin account not found in database." });
+    }
+
+    // If it's a new signup (no user in DB), we require name/password
+    if (!user) {
+      if (!name || !password) {
+        return res.status(400).json({ message: "Name and password required for signup" });
+      }
     }
 
     // generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // save temporary user info + OTP
+    // If user exists, we only need to verify them. If not, we store signup data.
     createOTP(
       normalizedEmail,
       otp,
-      { name, email: normalizedEmail, password, phone, campus },
+      {
+        name,
+        email: normalizedEmail,
+        password,
+        phone,
+        campus,
+        isLoginOnly: !!user
+      },
       OTP_EXPIRY
     );
 
     // send email OTP
-    await sendOTP(normalizedEmail, otp, name);
+    const displayName = user ? user.name : name;
+    await sendOTP(normalizedEmail, otp, displayName);
 
     res.json({
-      message: "OTP sent to your email",
+      message: user ? "Login OTP sent" : "Signup OTP sent",
       email: normalizedEmail,
       expiresIn: OTP_EXPIRY,
+      isExisting: !!user
     });
   } catch (err) {
     console.error("OTP Request Error:", err);
@@ -83,39 +115,49 @@ exports.verifyOTP = async (req, res) => {
     }
 
     const tempUser = result.tempUserData;
+    let finalUser;
 
-    // safety: double-check user does not already exist in database
-    const existing = await User.findOne({
-      email: normalizedEmail,
-    });
-    if (existing) {
-      return res.status(400).json({ message: "User already exists" });
+    if (tempUser.isLoginOnly) {
+      // Existing User Flow
+      finalUser = await User.findOne({ email: normalizedEmail });
+      if (!finalUser) {
+        return res.status(404).json({ message: "User record lost. Please signup again." });
+      }
+    } else {
+      // Signup Flow
+      // safety: double-check user does not already exist
+      const existing = await User.findOne({ email: normalizedEmail });
+      if (existing) {
+        finalUser = existing;
+      } else {
+        // Strict domain check again for safety
+        if (!normalizedEmail.endsWith("@kletech.ac.in")) {
+          return res.status(403).json({ message: "Only institutional emails allowed for signup." });
+        }
+
+        const hashedPassword = await bcrypt.hash(tempUser.password, 10);
+        finalUser = await User.create({
+          name: tempUser.name,
+          email: normalizedEmail,
+          phone: tempUser.phone,
+          campus: tempUser.campus || "",
+          password: hashedPassword,
+          isVerifiedStudent: true,
+        });
+      }
     }
-
-    // hash password
-    const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-
-    // create user in MongoDB
-    const newUser = await User.create({
-      name: tempUser.name,
-      email: normalizedEmail,
-      phone: tempUser.phone,
-      campus: tempUser.campus || "",
-      password: hashedPassword,
-      isVerifiedStudent: true,
-    });
 
     // issue JWT token
     const token = jwt.sign(
-      { id: newUser._id, email: newUser.email },
+      { id: finalUser._id, email: finalUser.email },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({
-      message: "Account created successfully",
+      message: tempUser.isLoginOnly ? "Login successful" : "Account verified successfully",
       token,
-      user: sanitizeUser(newUser),
+      user: sanitizeUser(finalUser),
     });
   } catch (err) {
     console.error("OTP Verify Error:", err);
@@ -138,11 +180,26 @@ exports.login = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    console.log("Normalized email:", normalizedEmail);
+
+    // AUTH POLICY: 
+    // 1. If email is @kletech.ac.in -> allowed
+    // 2. If email is NOT @kletech.ac.in -> check if in AUTHORIZED_ADMINS
+    const isInstitutional = normalizedEmail.endsWith("@kletech.ac.in");
+    const isApprovedAdminEmail = AUTHORIZED_ADMINS.includes(normalizedEmail);
+
+    if (!isInstitutional && !isApprovedAdminEmail) {
+      return res.status(403).json({
+        message: "Access Denied. Only institutional emails or authorized admins allowed."
+      });
+    }
 
     const user = await User.findOne({ email: normalizedEmail });
+
+    if (isApprovedAdminEmail && (!user || user.role !== 'admin')) {
+      return res.status(403).json({ message: "Admin privileges required for this account." });
+    }
+
     if (!user) {
-      console.log("Login failed: User not found for email:", normalizedEmail);
       return res.status(400).json({ message: "User not found" });
     }
 

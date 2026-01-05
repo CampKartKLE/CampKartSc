@@ -11,17 +11,20 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'seller', 'admin'],
       default: 'customer'
     },
-    sellerApprovalStatus: {
-      type: String,
-      enum: ['none', 'pending', 'approved', 'rejected'],
-      default: 'none'
+    sellerApplication: {
+      reason: { type: String },
+      category: { type: String },
+      status: {
+        type: String,
+        enum: ['none', 'pending', 'approved', 'rejected'],
+        default: 'none'
+      },
+      appliedAt: { type: Date },
+      reviewedAt: { type: Date }
     },
     isApprovedSeller: {
       type: Boolean,
       default: false
-    },
-    sellerApplicationReason: {
-      type: String
     },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },

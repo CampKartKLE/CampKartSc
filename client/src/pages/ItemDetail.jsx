@@ -31,12 +31,16 @@ const ItemDetail = () => {
 
     const fetchProduct = async () => {
         try {
-            const data = await getListingById(id);
-            setProduct(data);
+            const response = await getListingById(id);
+            if (response.success) {
+                setProduct(response.data);
 
-            // Should fetch similar products from real API if available, 
-            // for now leaving empty or mock if getListings supports filtering by category
-            setSimilarProducts([]);
+                // Should fetch similar products from real API if available, 
+                // for now leaving empty or mock if getListings supports filtering by category
+                setSimilarProducts([]);
+            } else {
+                setProduct(null);
+            }
         } catch (error) {
             console.error("Failed to fetch product", error);
             // Don'tredirect, just let the component render null or a specific error state
@@ -54,7 +58,8 @@ const ItemDetail = () => {
         }
 
         // If user is the seller, don't allow messaging
-        if (product.seller._id === user?._id) {
+        const sellerId = typeof product.seller === 'object' ? (product.seller._id || product.seller.id) : product.seller;
+        if (sellerId === (user?._id || user?.id)) {
             addToast({ title: 'Info', description: 'You cannot message yourself', variant: 'default' });
             return;
         }
@@ -253,7 +258,7 @@ const ItemDetail = () => {
                             {product.isSold ? 'Item Sold' : 'Contact Seller'}
                         </Button>
                         {/* Mark as Sold button for owner */}
-                        {isAuthenticated && user?._id === product.seller?.id && !product.isSold && (
+                        {isAuthenticated && (user?._id || user?.id) === (product.seller?._id || product.seller?.id) && !product.isSold && (
                             <Button
                                 className="w-full mt-2"
                                 variant="outline"

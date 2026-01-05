@@ -22,7 +22,7 @@ export const getMeApi = async (token) => {
   return res.data;
 };
 
-export const applySellerApi = async (reason) => {
-  const res = await axiosClient.post("/users/apply-seller", { reason });
+export const applySellerApi = async (reason, category) => {
+  const res = await axiosClient.post("/users/apply-seller", { reason, category });
   return res.data;
 };
