@@ -70,20 +70,10 @@ const ItemDetail = () => {
     const handleSendMessage = async (e) => {
         e.preventDefault();
         try {
-            // 1. Start/Get conversation
-            // Robustly get seller ID
-            const sellerId = typeof product.seller === 'object' ? (product.seller._id || product.seller.id) : product.seller;
+            if (!messageText.trim()) return;
 
-            if (!sellerId) {
-                console.error("Seller ID missing from product object");
-                addToast({ title: 'Error', description: 'Cannot message: Seller info missing', variant: 'destructive' });
-                return;
-            }
-
-            const conversation = await startConversation(sellerId);
-
-            // 2. Send message
-            await sendMessage(conversation._id, messageText);
+            // Start conversation linked to this item and send initial message
+            await startConversation(product._id, messageText);
 
             addToast({ title: 'Message Sent', description: 'The seller will receive your message.' });
             setIsMessageOpen(false);

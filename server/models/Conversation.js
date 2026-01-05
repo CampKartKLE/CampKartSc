@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 
 const conversationSchema = new mongoose.Schema({
+    listing: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Listing',
+        required: true
+    },
+    buyer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    seller: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     participants: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -18,8 +33,7 @@ const conversationSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Ensure unique conversation between two participants
-// This simple index assumes 2 participants. For group chats, logic handles it differently.
-// For now, we manually check existence before creation in the controller.
+// Compound index for efficient querying
+conversationSchema.index({ listing: 1, buyer: 1, seller: 1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

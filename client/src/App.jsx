@@ -20,7 +20,7 @@ import Help from './pages/Help';
 import Support from './pages/Support';
 import SellerApplication from './pages/SellerApplication';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import Onboarding from './pages/Onboarding';
+import RoleSelection from './pages/RoleSelection';
 import NotFound from './pages/NotFound';
 
 const ProtectedRoute = ({ children }) => {
@@ -41,8 +41,8 @@ const ProtectedRoute = ({ children }) => {
 
   // Redirect to onboarding if not completed and not an admin
   // We check location.pathname to avoid infinite redirect loops
-  if (user && !user.onboardingCompleted && user.role !== 'admin' && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+  if (user && !user.onboardingCompleted && user.role !== 'admin' && location.pathname !== '/role-selection' && location.pathname !== '/profile/apply-seller') {
+    return <Navigate to="/role-selection" replace />;
   }
 
   return children;
@@ -120,10 +120,10 @@ function App() {
             }
           />
           <Route
-            path="/onboarding"
+            path="/role-selection"
             element={
               <ProtectedRoute>
-                <Onboarding />
+                <RoleSelection />
               </ProtectedRoute>
             }
           />

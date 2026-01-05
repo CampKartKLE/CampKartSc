@@ -24,4 +24,7 @@ router.post("/apply-seller", authMiddleware, userController.applyToBeSeller);
 
 // module.exports = router;
 
+// Role Selection
+router.post("/set-role", authMiddleware, userController.setRole);
+
 module.exports = router;

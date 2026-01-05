@@ -163,6 +163,7 @@ exports.applyToBeSeller = async (req, res) => {
 
         // user.role stays 'customer' until approved
         user.isApprovedSeller = false;
+        user.onboardingCompleted = true; // Completes onboarding process
 
         await user.save();
 
@@ -209,5 +210,61 @@ exports.completeOnboarding = async (req, res) => {
     } catch (err) {
         console.error("CompleteOnboarding error:", err);
         res.status(500).json({ success: false, message: "Failed to complete onboarding" });
+    }
+};
+// -----------------------------
+// SET ROLE (Step 1 of Onboarding)
+// -----------------------------
+exports.setRole = async (req, res) => {
+    try {
+        const { role } = req.body; // 'customer' or 'seller'
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        if (role === 'customer') {
+            user.role = 'customer';
+            user.onboardingCompleted = true;
+            // Clear any old stuck application potentially
+            if (user.sellerApplication && user.sellerApplication.status === 'none') {
+                user.sellerApplication.status = 'none';
+            }
+        } else if (role === 'seller') {
+            // They are applying to be a seller
+            // We set status to pending immediately so they see the "Pending" dashboard
+            // validation of reason/category can happen in a separate step or we assume defaults for now
+            // But prompt implies "Apply as Seller" -> Pending.
+
+            user.role = 'customer'; // Role stays customer until approved
+            user.onboardingCompleted = true;
+
+            // Only set to pending if not already participating
+            if (!user.sellerApplication || user.sellerApplication.status === 'none') {
+                user.sellerApplication = {
+                    status: 'pending',
+                    appliedAt: new Date(),
+                    reason: "Initial Application via Role Selection", // Default
+                    category: "General" // Default
+                };
+            }
+        } else {
+            return res.status(400).json({ success: false, message: "Invalid role selection" });
+        }
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: "Role updated successfully",
+            data: {
+                id: user._id,
+                role: user.role,
+                sellerApplication: user.sellerApplication,
+                onboardingCompleted: user.onboardingCompleted
+            }
+        });
+    } catch (err) {
+        console.error("SetRole error:", err);
+        res.status(500).json({ success: false, message: "Failed to set role" });
     }
 };

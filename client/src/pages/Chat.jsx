@@ -72,8 +72,18 @@ const Chat = () => {
 
     // Helper to get other participant
     const getOtherParticipant = (conversation) => {
+        const myId = user?._id || user?.id;
+
+        // Priority: Use explicit buyer/seller fields if available
+        if (conversation.buyer && conversation.seller) {
+            const buyerId = conversation.buyer._id || conversation.buyer.id || conversation.buyer;
+            if (buyerId === myId) return conversation.seller;
+            return conversation.buyer;
+        }
+
+        // Fallback
         if (!conversation?.participants) return {};
-        return conversation.participants.find(p => p._id !== user?._id) || {};
+        return conversation.participants.find(p => (p._id || p) !== myId) || {};
     };
 
     return (
@@ -106,7 +116,6 @@ const Chat = () => {
                                     >
                                         <div className="relative">
                                             <Avatar fallback={otherUser.name?.[0] || '?'} size="md" />
-                                            {/* Online status logic could go here */}
                                         </div>
                                         <div className="flex-1 text-left">
                                             <div className="flex justify-between items-start mb-1">
@@ -115,6 +124,12 @@ const Chat = () => {
                                                     {chat.lastMessageAt ? new Date(chat.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                                 </span>
                                             </div>
+                                            {/* Listing Info */}
+                                            {chat.listing && (
+                                                <div className="text-xs font-semibold text-campus-blue mb-1 truncate">
+                                                    {chat.listing.title} • ₹{chat.listing.price}
+                                                </div>
+                                            )}
                                             <p className="text-sm text-muted-foreground truncate">
                                                 {chat.lastMessage?.content || 'No messages yet'}
                                             </p>
@@ -135,10 +150,14 @@ const Chat = () => {
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <Avatar fallback={getOtherParticipant(selectedChat).name?.[0] || '?'} size="md" />
-                                        {/* Online status stub */}
                                     </div>
                                     <div>
                                         <h3 className="font-semibold">{getOtherParticipant(selectedChat).name || 'User'}</h3>
+                                        {selectedChat.listing && (
+                                            <p className="text-xs text-muted-foreground">
+                                                re: {selectedChat.listing.title}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 <Button variant="ghost" size="icon">
@@ -149,7 +168,7 @@ const Chat = () => {
                             {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {messages.map((msg) => {
-                                    const isMe = msg.sender === (user?._id || user?.id);
+                                    const isMe = msg.sender === (user?._id || user?.id) || (msg.sender && (msg.sender._id === user?._id || msg.sender.id === user?.id));
                                     return (
                                         <div
                                             key={msg._id}

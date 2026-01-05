@@ -6,9 +6,9 @@ export const getConversations = async () => {
     return data;
 };
 
-// Start a new conversation
-export const startConversation = async (recipientId) => {
-    const { data } = await axiosClient.post('/messages/conversations', { recipientId });
+// Start a new conversation (linked to listing)
+export const startConversation = async (listingId, message) => {
+    const { data } = await axiosClient.post('/messages/conversations', { listingId, message });
     return data;
 };
 

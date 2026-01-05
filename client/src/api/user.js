@@ -14,3 +14,8 @@ export const changePassword = async (passwordData) => {
     const { data } = await axiosClient.put('/users/password', passwordData);
     return data;
 };
+
+export const setRole = async (role) => {
+    const { data } = await axiosClient.post('/users/set-role', { role });
+    return data;
+};
