@@ -14,19 +14,39 @@ const BuyerDashboard = ({ user }) => {
     const [wishlistCount, setWishlistCount] = useState(0);
     const [recentViewsCount, setRecentViewsCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [wishlistIds, setWishlistIds] = useState([]);
     const { refreshUser } = useAuth();
 
+    // Sync local wishlist IDs with user data - Only on mount or user change, NOT on every refresh
+    useEffect(() => {
+        if (user?.wishlist) {
+            const ids = user.wishlist.map(w => (typeof w === 'string' ? w : w._id));
+            setWishlistIds(ids);
+        }
+    }, [user?._id]); // Depend on ID only to prevent overwriting local state during optimistic updates
+
     const handleToggleWishlist = async (productId) => {
+        // Optimistic Update
+        const isCurrentlySaved = wishlistIds.includes(productId);
+        const newWishlistIds = isCurrentlySaved
+            ? wishlistIds.filter(id => id !== productId)
+            : [...wishlistIds, productId];
+
+        setWishlistIds(newWishlistIds);
+
         try {
             await toggleWishlist(productId);
+            // We still refresh to ensure server consistency and get full objects for the bottom list
             await refreshUser();
 
-            // Refresh local wishlist stats
+            // Refresh local wishlist stats (bottom list)
             const wishlistData = await getWishlist();
             setSavedItems(wishlistData.slice(0, 3));
             setWishlistCount(wishlistData.length);
         } catch (error) {
             console.error('Failed to toggle wishlist:', error);
+            // Revert on failure
+            setWishlistIds(wishlistIds);
         }
     };
 
@@ -37,7 +57,7 @@ const BuyerDashboard = ({ user }) => {
                 const allProducts = await getListings();
                 setRecommendedItems(allProducts.slice(0, 4));
 
-                // Set recent views count (based on total available items or user activity)
+                // Set recent views count
                 setRecentViewsCount(Math.min(allProducts.length, 12));
 
                 // Fetch actual wishlist
@@ -46,7 +66,6 @@ const BuyerDashboard = ({ user }) => {
                     setSavedItems(wishlistData.slice(0, 3));
                     setWishlistCount(wishlistData.length);
                 } catch (wishlistError) {
-                    // If wishlist fetch fails, fallback to 0
                     console.error('Failed to fetch wishlist:', wishlistError);
                     setWishlistCount(0);
                     setSavedItems([]);
@@ -154,7 +173,7 @@ const BuyerDashboard = ({ user }) => {
                         <ProductCard
                             key={item.id}
                             product={item}
-                            isFavorite={user?.wishlist?.includes(item._id)}
+                            isFavorite={wishlistIds.includes(item._id)}
                             onToggleFavorite={handleToggleWishlist}
                         />
                     ))}
@@ -165,7 +184,7 @@ const BuyerDashboard = ({ user }) => {
             {savedItems.length > 0 && (
                 <div className="bg-gray-50 rounded-3xl p-8">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">Back in stock & price drops</h3>
+                        <h3 className="text-xl font-bold text-gray-900">Your Watchlist</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {savedItems.map(item => (

@@ -38,7 +38,7 @@ export const RoleProvider = ({ children }) => {
     }, [isAuthenticated, user]);
 
     const switchUiMode = () => {
-        if (currentRole === ROLES.SELLER || currentRole === ROLES.ADMIN) {
+        if (isApprovedSeller || currentRole === ROLES.SELLER || currentRole === ROLES.ADMIN) {
             const newMode = uiMode === 'buyer' ? 'seller' : 'buyer';
             setUiMode(newMode);
             localStorage.setItem('campkart_ui_mode', newMode);
